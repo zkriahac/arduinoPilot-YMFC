@@ -67,11 +67,14 @@ float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_
 float angle_roll_acc, angle_pitch_acc, angle_pitch, angle_roll;
 boolean gyro_angles_set;
 
+float Vbat=12; //edt EdH better battery voltage routine
+float readV=1023;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Setup routine
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup(){
-  //Serial.begin(57600);
+  Serial.begin(57600);
   //Copy the EEPROM data for fast access data.
   for(start = 0; start <= 35; start++)eeprom_data[start] = EEPROM.read(start);
   start = 0;                                                                //Set start back to zero.
@@ -153,6 +156,9 @@ void setup(){
   //The variable battery_voltage holds 1050 if the battery voltage is 10.5V.
   battery_voltage = (analogRead(0) + 65) * 1.2317;
 
+  
+
+
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
   //When everything is done, turn off the led.
@@ -162,13 +168,16 @@ void setup(){
 //Main program loop
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop(){
+  
+  getVbat();
+  if (Vbat < 11.3) digitalWrite(12,HIGH);    
 
   //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
   gyro_roll_input = (gyro_roll_input * 0.7) + ((gyro_roll / 65.5) * 0.3);   //Gyro pid input is deg/sec.
   gyro_pitch_input = (gyro_pitch_input * 0.7) + ((gyro_pitch / 65.5) * 0.3);//Gyro pid input is deg/sec.
   gyro_yaw_input = (gyro_yaw_input * 0.7) + ((gyro_yaw / 65.5) * 0.3);      //Gyro pid input is deg/sec.
 
-
+    
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //This is the added IMU code from the videos:
   //https://youtu.be/4BoIE8YQwM8
@@ -195,8 +204,14 @@ void loop(){
   }
   
   //Place the MPU-6050 spirit level and note the values in the following two lines for calibration.
-  angle_pitch_acc -= 0.0;                                                   //Accelerometer calibration value for pitch.
-  angle_roll_acc -= 0.0;                                                    //Accelerometer calibration value for roll.
+  angle_pitch_acc -=  0.90847775;                                                   //Accelerometer calibration value for pitch.
+  angle_roll_acc  -= -3.50224824;                                                    //Accelerometer calibration value for roll.
+
+  //Serial.print("pitch = ");
+  //Serial.print(angle_pitch_acc);
+  //Serial.print(", roll = ");
+  //Serial.print(", ");
+  //Serial.println(angle_roll_acc);
   
   angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;            //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
   angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
@@ -267,10 +282,13 @@ void loop(){
   //A complementary filter is used to reduce noise.
   //0.09853 = 0.08 * 1.2317.
   battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
+  
 
   //Turn on the led if battery voltage is to low.
-  if(battery_voltage < 1000 && battery_voltage > 600)digitalWrite(12, HIGH);
+  //if(battery_voltage < 1000 && battery_voltage > 600)digitalWrite(12, HIGH);
+  
 
+  
 
   throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
 
@@ -554,5 +572,11 @@ void set_gyro_registers(){
     Wire.endTransmission();                                                    //End the transmission with the gyro    
 
   }  
+}
+
+
+void getVbat(){
+  readV = readV *0.7 + 0.3 * analogRead(A0);  
+  Vbat = 0.012244897959184 * readV -0.085102040816353;
 }
 
