@@ -21,8 +21,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PID gain and limit settings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-float pid_p_gain_roll = 1.3;               //(1.3)Gain setting for the roll P-controller
-float pid_i_gain_roll = 0.020;              //(0.04)Gain setting for the roll I-controller
+float pid_p_gain_roll = 1.2;               //(1.3)Gain setting for the roll P-controller
+float pid_i_gain_roll = 0.002;              //(0.04)Gain setting for the roll I-controller
 float pid_d_gain_roll = 18.0;              //(18.0)Gain setting for the roll D-controller
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
@@ -31,9 +31,9 @@ float pid_i_gain_pitch = pid_i_gain_roll;  //Gain setting for the pitch I-contro
 float pid_d_gain_pitch = pid_d_gain_roll;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
-float pid_p_gain_yaw = 3.8;                //(3.8)Gain setting for the pitch P-controller. //4.0
-float pid_i_gain_yaw = 0.015;               //(0.015)Gain setting for the pitch I-controller. //0.02
-float pid_d_gain_yaw = 0.0;                //(0.0)Gain setting for the pitch D-controller.
+float pid_p_gain_yaw = 2.2;                //(3.8)Gain setting for the pitch P-controller. //4.0
+float pid_i_gain_yaw = 0.0010;               //(0.015)Gain setting for the pitch I-controller. //0.02
+float pid_d_gain_yaw = 7.5;                //(0.0)Gain setting for the pitch D-controller.
 int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-)
 
 boolean auto_level = true;                 //Auto level on (true) or off (false)
@@ -171,6 +171,7 @@ void loop(){
   
   getVbat();
   if (Vbat < 11.3) digitalWrite(12,HIGH);    
+  //Serial.println(Vbat);
 
   //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
   gyro_roll_input = (gyro_roll_input * 0.7) + ((gyro_roll / 65.5) * 0.3);   //Gyro pid input is deg/sec.
@@ -204,8 +205,8 @@ void loop(){
   }
   
   //Place the MPU-6050 spirit level and note the values in the following two lines for calibration.
-  angle_pitch_acc -=  0.90847775;                                                   //Accelerometer calibration value for pitch.
-  angle_roll_acc  -= -3.50224824;                                                    //Accelerometer calibration value for roll.
+  angle_pitch_acc -= 0.0; //0.90847775;                                                   //Accelerometer calibration value for pitch.
+  angle_roll_acc  -= 0.0;//-3.50224824;                                                    //Accelerometer calibration value for roll.
 
   //Serial.print("pitch = ");
   //Serial.print(angle_pitch_acc);
@@ -576,7 +577,7 @@ void set_gyro_registers(){
 
 
 void getVbat(){
-  readV = readV *0.7 + 0.3 * analogRead(A0);  
+  readV = readV *0.96 + 0.04 * analogRead(A0);  
   Vbat = 0.012244897959184 * readV -0.085102040816353;
 }
 
