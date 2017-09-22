@@ -56,7 +56,7 @@ double gyro_axis_cal[4];
 
 //Setup routine
 void setup(){
-  Serial.begin(57600);                                                                  //Start the serial port.
+  Serial.begin(115200);                                                                  //Start the serial port.
   Wire.begin();                                                                         //Start the wire library as master
   TWBR = 12;                                                                            //Set the I2C clock speed to 400kHz.
 

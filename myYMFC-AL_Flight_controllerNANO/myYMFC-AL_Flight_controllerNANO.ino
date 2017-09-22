@@ -21,9 +21,9 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //PID gain and limit settings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-float pid_p_gain_roll = 1.3;               //Gain setting for the roll P-controller
-float pid_i_gain_roll = 0.04;              //Gain setting for the roll I-controller
-float pid_d_gain_roll = 18.0;              //Gain setting for the roll D-controller
+float pid_p_gain_roll = 0.5;               //(1.3)Gain setting for the roll P-controller
+float pid_i_gain_roll = 0.0001;              //(0.04)Gain setting for the roll I-controller
+float pid_d_gain_roll = 7.5;              //(18.0)Gain setting for the roll D-controller
 int pid_max_roll = 400;                    //Maximum output of the PID-controller (+/-)
 
 float pid_p_gain_pitch = pid_p_gain_roll;  //Gain setting for the pitch P-controller.
@@ -31,9 +31,9 @@ float pid_i_gain_pitch = pid_i_gain_roll;  //Gain setting for the pitch I-contro
 float pid_d_gain_pitch = pid_d_gain_roll;  //Gain setting for the pitch D-controller.
 int pid_max_pitch = pid_max_roll;          //Maximum output of the PID-controller (+/-)
 
-float pid_p_gain_yaw = 3.8;                //Gain setting for the pitch P-controller. //4.0
-float pid_i_gain_yaw = 0.015;               //Gain setting for the pitch I-controller. //0.02
-float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller.
+float pid_p_gain_yaw = 0.5;                //(3.8)Gain setting for the pitch P-controller. //4.0
+float pid_i_gain_yaw = 0.0001;               //(0.015)Gain setting for the pitch I-controller. //0.02
+float pid_d_gain_yaw = 0.0;                //(0.0)Gain setting for the pitch D-controller.
 int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-)
 
 boolean auto_level = true;                 //Auto level on (true) or off (false)
@@ -67,11 +67,14 @@ float pid_i_mem_yaw, pid_yaw_setpoint, gyro_yaw_input, pid_output_yaw, pid_last_
 float angle_roll_acc, angle_pitch_acc, angle_pitch, angle_roll;
 boolean gyro_angles_set;
 
+float Vbat=12; //edt EdH better battery voltage routine
+float readV=1023;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Setup routine
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void setup(){
-  Serial.begin(57600);
+  Serial.begin(115200);
   //Copy the EEPROM data for fast access data.
   for(start = 0; start <= 35; start++)eeprom_data[start] = EEPROM.read(start);
   start = 0;                                                                //Set start back to zero.
@@ -86,7 +89,7 @@ void setup(){
   DDRB |= B00110000;                                                        //Configure digital poort 12 and 13 as output.
 
   //Use the led on the Arduino for startup indication.
-  digitalWrite(12,HIGH);                                                    //Turn on the warning led.
+  digitalWrite(13,HIGH);                                                    //Turn on the warning led.
 
   //Check the EEPROM signature to make sure that the setup program is executed.
   while(eeprom_data[33] != 'J' || eeprom_data[34] != 'M' || eeprom_data[35] != 'B')delay(10);
@@ -106,7 +109,7 @@ void setup(){
 
   //Let's take multiple gyro data samples so we can determine the average gyro offset (calibration).
   for (cal_int = 0; cal_int < 2000 ; cal_int ++){                           //Take 2000 readings for calibration.
-    if(cal_int % 15 == 0)digitalWrite(12, !digitalRead(12));                //Change the led status to indicate calibration.
+    if(cal_int % 15 == 0)digitalWrite(13, !digitalRead(13));                //Change the led status to indicate calibration.
     gyro_signalen();                                                        //Read the gyro output.
     gyro_axis_cal[1] += gyro_axis[1];                                       //Ad roll value to gyro_roll_cal.
     gyro_axis_cal[2] += gyro_axis[2];                                       //Ad pitch value to gyro_pitch_cal.
@@ -139,7 +142,7 @@ void setup(){
     PORTD &= B00001111;                                                     //Set digital poort 4, 5, 6 and 7 low.
     delay(3);                                                               //Wait 3 milliseconds before the next loop.
     if(start == 125){                                                       //Every 125 loops (500ms).
-      digitalWrite(12, !digitalRead(12));                                   //Change the led status.
+      digitalWrite(13, !digitalRead(13));                                   //Change the led status.
       start = 0;                                                            //Start again at 0.
     }
   }
@@ -151,26 +154,37 @@ void setup(){
   //12.6V equals 1023 analogRead(0).
   //1260 / 1023 = 1.2317.
   //The variable battery_voltage holds 1050 if the battery voltage is 10.5V.
-  battery_voltage = (analogRead(0) + 65) * 1.2317;
+  //battery_voltage = (analogRead(0) + 65) * 1.2317;
+
+  
+
 
   loop_timer = micros();                                                    //Set the timer for the next loop.
 
   //When everything is done, turn off the led.
-  digitalWrite(12,LOW);                                                     //Turn off the warning led.
+  digitalWrite(13,LOW);                                                     //Turn off the warning led.
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Main program loop
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void loop(){
 
-  Serial.println(receiver_input_channel_4);
-  
+  //Serial.print(receiver_input_channel_1);
+  //Serial.print(", ");
+  //Serial.print(receiver_input_channel_2);
+  //Serial.print(", ");
+  //Serial.print(receiver_input_channel_3);
+  //Serial.print(", ");
+  //Serial.println(receiver_input_channel_4);
+  //getVbat();
+  //if (Vbat < 11.3) digitalWrite(13,HIGH);    
+
   //65.5 = 1 deg/sec (check the datasheet of the MPU-6050 for more information).
   gyro_roll_input = (gyro_roll_input * 0.7) + ((gyro_roll / 65.5) * 0.3);   //Gyro pid input is deg/sec.
   gyro_pitch_input = (gyro_pitch_input * 0.7) + ((gyro_pitch / 65.5) * 0.3);//Gyro pid input is deg/sec.
   gyro_yaw_input = (gyro_yaw_input * 0.7) + ((gyro_yaw / 65.5) * 0.3);      //Gyro pid input is deg/sec.
 
-
+    
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   //This is the added IMU code from the videos:
   //https://youtu.be/4BoIE8YQwM8
@@ -197,8 +211,14 @@ void loop(){
   }
   
   //Place the MPU-6050 spirit level and note the values in the following two lines for calibration.
-  angle_pitch_acc -= 0.0;                                                   //Accelerometer calibration value for pitch.
-  angle_roll_acc -= 0.0;                                                    //Accelerometer calibration value for roll.
+  angle_pitch_acc -=  0.90847775;                                                   //Accelerometer calibration value for pitch.
+  angle_roll_acc  -= -3.50224824;                                                    //Accelerometer calibration value for roll.
+
+  //Serial.print("pitch = ");
+  //Serial.print(angle_pitch_acc);
+  //Serial.print(", roll = ");
+  //Serial.print(", ");
+  //Serial.println(angle_roll_acc);
   
   angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;            //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
   angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
@@ -213,9 +233,9 @@ void loop(){
 
 
   //For starting the motors: throttle low and yaw left (step 1).
-  if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1950)start = 1;
+  if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1900)start = 1;
   //When yaw stick is back in the center position start the motors (step 2).
-  if(start == 1 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1550){
+  if(start == 1 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 < 1550){
     start = 2;
 
     angle_pitch = angle_pitch_acc;                                          //Set the gyro pitch angle equal to the accelerometer pitch angle when the quadcopter is started.
@@ -268,11 +288,14 @@ void loop(){
   //The battery voltage is needed for compensation.
   //A complementary filter is used to reduce noise.
   //0.09853 = 0.08 * 1.2317.
-  battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
+  //battery_voltage = battery_voltage * 0.92 + (analogRead(0) + 65) * 0.09853;
+  
 
   //Turn on the led if battery voltage is to low.
-  if(battery_voltage < 1000 && battery_voltage > 600)digitalWrite(12, HIGH);
+  //if(battery_voltage < 1000 && battery_voltage > 600)digitalWrite(12, HIGH);
+  
 
+  
 
   throttle = receiver_input_channel_3;                                      //We need the throttle signal as a base signal.
 
@@ -283,12 +306,12 @@ void loop(){
     esc_3 = throttle + pid_output_pitch - pid_output_roll - pid_output_yaw; //Calculate the pulse for esc 3 (rear-left - CCW)
     esc_4 = throttle - pid_output_pitch - pid_output_roll + pid_output_yaw; //Calculate the pulse for esc 4 (front-left - CW)
 
-    if (battery_voltage < 1240 && battery_voltage > 800){                   //Is the battery connected?
-      esc_1 += esc_1 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-1 pulse for voltage drop.
-      esc_2 += esc_2 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-2 pulse for voltage drop.
-      esc_3 += esc_3 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-3 pulse for voltage drop.
-      esc_4 += esc_4 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-4 pulse for voltage drop.
-    } 
+    //if (battery_voltage < 1240 && battery_voltage > 800){                   //Is the battery connected?
+    //  esc_1 += esc_1 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-1 pulse for voltage drop.
+    //  esc_2 += esc_2 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-2 pulse for voltage drop.
+    //  esc_3 += esc_3 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-3 pulse for voltage drop.
+    //  esc_4 += esc_4 * ((1240 - battery_voltage)/(float)3500);              //Compensate the esc-4 pulse for voltage drop.
+    //} 
 
     if (esc_1 < 1100) esc_1 = 1100;                                         //Keep the motors running.
     if (esc_2 < 1100) esc_2 = 1100;                                         //Keep the motors running.
@@ -320,7 +343,7 @@ void loop(){
   //the Q&A page: 
   //! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! !
     
-  if(micros() - loop_timer > 4050)digitalWrite(12, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
+  if(micros() - loop_timer > 4050)digitalWrite(13, HIGH);                   //Turn on the LED if the loop time exceeds 4050us.
   
   //All the information for controlling the motor's is available.
   //The refresh rate is 250Hz. That means the esc's need there pulse every 4ms.
@@ -556,5 +579,11 @@ void set_gyro_registers(){
     Wire.endTransmission();                                                    //End the transmission with the gyro    
 
   }  
+}
+
+
+void getVbat(){
+  readV = readV *0.7 + 0.3 * analogRead(A0);  
+  Vbat = 0.012244897959184 * readV -0.085102040816353;
 }
 
