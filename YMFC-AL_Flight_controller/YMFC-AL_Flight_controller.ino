@@ -38,6 +38,9 @@ int pid_max_yaw = 400;                     //Maximum output of the PID-controlle
 
 boolean auto_level = true;                 //Auto level on (true) or off (false)
 
+int angle_max=60;
+int angle_min=-60;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Declaring global variables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,9 +205,19 @@ void loop(){
   
   angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;            //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
   angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
-
-  pitch_level_adjust = angle_pitch * 15;                                    //Calculate the pitch angle correction
-  roll_level_adjust = angle_roll * 15;                                      //Calculate the roll angle correction
+  
+  // zkria -- start
+  
+  if (angle_pitch > angle_max) angle_pitch = angle_max;
+  if (angle_pitch > angle_min) angle_pitch = angle_min;
+  if (angle_roll > angle_max) angle_roll = angle_max;
+  if (angle_roll > angle_min) angle_roll = angle_min;
+  // make the angle between -500 , +500
+  pitch_level_adjust = (((angle_pitch-angle_min)*(492+492))/(60+60))-500;
+  roll_level_adjust = (((angle_roll-angle_min)*(492+492))/(60+60))-500;
+ // zkria -- end
+ // pitch_level_adjust = angle_pitch * 15;                                    //Calculate the pitch angle correction
+ // roll_level_adjust = angle_roll * 15;                                      //Calculate the roll angle correction
 
   if(!auto_level){                                                          //If the quadcopter is not in auto-level mode
     pitch_level_adjust = 0;                                                 //Set the pitch angle correction to zero.
@@ -236,12 +249,12 @@ void loop(){
   //The PID set point in degrees per second is determined by the roll receiver input.
   //In the case of deviding by 3 the max roll rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
   pid_roll_setpoint = 0;
-  //We need a little dead band of 16us for better results.
+  //We need a little dead band of 16us for better results. [+500 ,- 500]
   if(receiver_input_channel_1 > 1508)pid_roll_setpoint = receiver_input_channel_1 - 1508;
   else if(receiver_input_channel_1 < 1492)pid_roll_setpoint = receiver_input_channel_1 - 1492;
 
   pid_roll_setpoint -= roll_level_adjust;                                   //Subtract the angle correction from the standardized receiver roll input value.
-  pid_roll_setpoint /= 3.0;                                                 //Divide the setpoint for the PID roll controller by 3 to get angles in degrees.
+ // pid_roll_setpoint /= 3.0;                                                 //Divide the setpoint for the PID roll controller by 3 to get angles in degrees.
 
 
   //The PID set point in degrees per second is determined by the pitch receiver input.
@@ -252,7 +265,7 @@ void loop(){
   else if(receiver_input_channel_2 < 1492)pid_pitch_setpoint = receiver_input_channel_2 - 1492;
 
   pid_pitch_setpoint -= pitch_level_adjust;                                  //Subtract the angle correction from the standardized receiver pitch input value.
-  pid_pitch_setpoint /= 3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
+  //pid_pitch_setpoint /= 3.0;                                                 //Divide the setpoint for the PID pitch controller by 3 to get angles in degrees.
 
   //The PID set point in degrees per second is determined by the yaw receiver input.
   //In the case of deviding by 3 the max yaw rate is aprox 164 degrees per second ( (500-8)/3 = 164d/s ).
