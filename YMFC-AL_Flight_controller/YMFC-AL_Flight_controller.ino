@@ -38,6 +38,9 @@ int pid_max_yaw = 400;                     //Maximum output of the PID-controlle
 
 boolean auto_level = true;                 //Auto level on (true) or off (false)
 
+int angle_max= 60;
+int angle_min=-60;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Declaring global variables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -203,6 +206,17 @@ void loop(){
   angle_pitch = angle_pitch * 0.9996 + angle_pitch_acc * 0.0004;            //Correct the drift of the gyro pitch angle with the accelerometer pitch angle.
   angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
 
+  // zkria -- start
+
+  if (angle_pitch > angle_max) angle_pitch = angle_max;
+  if (angle_pitch > angle_min) angle_pitch = angle_min;
+  if (angle_roll > angle_max) angle_roll = angle_max;
+  if (angle_roll > angle_min) angle_roll = angle_min;
+  // make the angle between -500 , +500
+  pitch_level_adjust = (((angle_pitch-angle_min)*(492+492))/(60+60))-500;
+  roll_level_adjust = (((angle_roll-angle_min)*(492+492))/(60+60))-500;
+ // zkria -- end
+  
   pitch_level_adjust = angle_pitch * 15;                                    //Calculate the pitch angle correction
   roll_level_adjust = angle_roll * 15;                                      //Calculate the roll angle correction
 
