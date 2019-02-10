@@ -38,8 +38,8 @@ int pid_max_yaw = 400;                     //Maximum output of the PID-controlle
 
 boolean auto_level = true;                 //Auto level on (true) or off (false)
 
-int angle_max=60;
-int angle_min=-60;
+int angle_max=50;
+int angle_min=-50;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Declaring global variables
@@ -207,23 +207,27 @@ void loop(){
   angle_roll = angle_roll * 0.9996 + angle_roll_acc * 0.0004;               //Correct the drift of the gyro roll angle with the accelerometer roll angle.
   
   // zkria -- start
+  // set the IMU angle between -50 deg to 50 deg
   
   if (angle_pitch > angle_max) angle_pitch = angle_max;
-  if (angle_pitch > angle_min) angle_pitch = angle_min;
+  if (angle_pitch < angle_min) angle_pitch = angle_min;
   if (angle_roll > angle_max) angle_roll = angle_max;
-  if (angle_roll > angle_min) angle_roll = angle_min;
-  // make the angle between -500 , +500
-  pitch_level_adjust = (((angle_pitch-angle_min)*(492+492))/(60+60))-500;
-  roll_level_adjust = (((angle_roll-angle_min)*(492+492))/(60+60))-500;
- // zkria -- end
+  if (angle_roll < angle_min) angle_roll = angle_min;
+  
+  // make level adjust deg * 10 to change it from -500 to +500
+  pitch_level_adjust = angle_pitch*10;
+  roll_level_adjust = angle_roll*10;
+  
  // pitch_level_adjust = angle_pitch * 15;                                    //Calculate the pitch angle correction
  // roll_level_adjust = angle_roll * 15;                                      //Calculate the roll angle correction
 
+ //  
   if(!auto_level){                                                          //If the quadcopter is not in auto-level mode
     pitch_level_adjust = 0;                                                 //Set the pitch angle correction to zero.
     roll_level_adjust = 0;                                                  //Set the roll angle correcion to zero.
   }
 
+ // zkria -- end
 
   //For starting the motors: throttle low and yaw left (step 1).
   if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1950)start = 1;
@@ -272,8 +276,8 @@ void loop(){
   pid_yaw_setpoint = 0;
   //We need a little dead band of 16us for better results.
   if(receiver_input_channel_3 > 1050){ //Do not yaw when turning off the motors.
-    if(receiver_input_channel_4 > 1508)pid_yaw_setpoint = (receiver_input_channel_4 - 1508)/3.0;
-    else if(receiver_input_channel_4 < 1492)pid_yaw_setpoint = (receiver_input_channel_4 - 1492)/3.0;
+    if(receiver_input_channel_4 > 1508)pid_yaw_setpoint = (receiver_input_channel_4 - 1508);
+    else if(receiver_input_channel_4 < 1492)pid_yaw_setpoint = (receiver_input_channel_4 - 1492);
   }
   
   calculate_pid();                                                            //PID inputs are known. So we can calculate the pid output.
