@@ -560,7 +560,11 @@ void set_gyro_registers(){
   }  
 }
 
-
+ 
+  // level adjust deg * 10  değeri -500 to +500 aralarında olmak üzere
+  pitch_level_adjust = angle_pitch*10;
+  roll_level_adjust = angle_roll*10;
+  
 
   // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
   pid_Roll_setpoint = 0;
@@ -569,6 +573,8 @@ void set_gyro_registers(){
     if(receiver_input_channel_1 > 1508)pid_Roll_setpoint = (receiver_input_channel_1 - 1508);
     else if(receiver_input_channel_1 < 1492)pid_Roll_setpoint = (receiver_input_channel_1 - 1492);
   }
+  pid_roll_setpoint -= roll_level_adjust; 
+
   // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
    pid_Pitch_setpoint = 0;
   //Daha iyi sonuçlar elde etmek için küçük bir ölü 16us değeri almayacağız.
@@ -576,6 +582,8 @@ void set_gyro_registers(){
     if(receiver_input_channel_2 > 1508)pid_Pitch_setpoint = (receiver_input_channel_2 - 1508);
     else if(receiver_input_channel_2 < 1492)pid_Pitch_setpoint = (receiver_input_channel_2 - 1492);
   }
+  pid_Pitch_setpoint -= Pitch_level_adjust; 
+
   // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
    pid_yaw_setpoint = 0;
   //Daha iyi sonuçlar elde etmek için küçük bir ölü 16us değeri almayacağız.
