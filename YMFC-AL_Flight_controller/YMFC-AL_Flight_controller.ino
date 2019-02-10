@@ -258,6 +258,15 @@ void loop(){
 
   pid_roll_setpoint -= roll_level_adjust;  //Subtract the angle correction from the standardized receiver roll input value.
 
+  //The PID set point in degrees per second is determined by the roll receiver input.
+  pid_pitch_setpoint = 0;
+  //We need a little dead band of 16us for better results ~ [+500 ,- 500]
+  if(receiver_input_channel_2 > 1508)pid_pitch_setpoint = receiver_input_channel_2 - 1508;
+  else if(receiver_input_channel_2 < 1492)pid_pitch_setpoint = receiver_input_channel_2 - 1492;
+
+  pid_pitch_setpoint -= pitch_level_adjust;  //Subtract the angle correction from the standardized receiver roll input value.
+
+  
    pid_yaw_setpoint = 0;
   //We need a little dead band of 16us for better results.
   if(receiver_input_channel_3 > 1050){ //Do not yaw when turning off the motors.
@@ -561,37 +570,4 @@ void set_gyro_registers(){
 }
 
  
-  // level adjust deg * 10  değeri -500 to +500 aralarında olmak üzere
-  pitch_level_adjust = angle_pitch*10;
-  roll_level_adjust = angle_roll*10;
-  
-
-  // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
-  pid_Roll_setpoint = 0;
- //Daha iyi sonuçlar elde etmek için küçük bir ölü 16us değeri almayacağız.
-  if(receiver_input_channel_3 > 1050){ //Motorları çalışmadıkları zaman Roll olamasın.
-    if(receiver_input_channel_1 > 1508)pid_Roll_setpoint = (receiver_input_channel_1 - 1508);
-    else if(receiver_input_channel_1 < 1492)pid_Roll_setpoint = (receiver_input_channel_1 - 1492);
-  }
-  pid_roll_setpoint -= roll_level_adjust; 
-
-  // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
-   pid_Pitch_setpoint = 0;
-  //Daha iyi sonuçlar elde etmek için küçük bir ölü 16us değeri almayacağız.
-  if(receiver_input_channel_3 > 1050){ //Motorları çalışmadıkları zaman Pitch olamasın.
-    if(receiver_input_channel_2 > 1508)pid_Pitch_setpoint = (receiver_input_channel_2 - 1508);
-    else if(receiver_input_channel_2 < 1492)pid_Pitch_setpoint = (receiver_input_channel_2 - 1492);
-  }
-  pid_Pitch_setpoint -= Pitch_level_adjust; 
-
-  // Derece / saniye  PID setpoint, alıcı RC girişi tarafından belirlenir.
-   pid_yaw_setpoint = 0;
-  //Daha iyi sonuçlar elde etmek için küçük bir ölü 16us değeri almayacağız.
-  if(receiver_input_channel_3 > 1050){ //Motorları çalışmadıkları zaman Yaw olamasın.
-    if(receiver_input_channel_4 > 1508)pid_yaw_setpoint = (receiver_input_channel_4 - 1508);
-    else if(receiver_input_channel_4 < 1492)pid_yaw_setpoint = (receiver_input_channel_4 - 1492);
-  }
-  
-  calculate_pid();                                               
-
-
+ 
