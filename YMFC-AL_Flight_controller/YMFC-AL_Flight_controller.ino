@@ -36,6 +36,9 @@ float pid_i_gain_yaw = 0.015;               //Gain setting for the pitch I-contr
 float pid_d_gain_yaw = 0.0;                //Gain setting for the pitch D-controller.
 int pid_max_yaw = 400;                     //Maximum output of the PID-controller (+/-)
 
+P_pitch_stab= 1;
+P_roll_stab = 1;
+
 boolean auto_level = true;                 //Auto level on (true) or off (false)
 
 int angle_max=50;
@@ -258,6 +261,8 @@ void loop(){
 
   pid_roll_setpoint -= roll_level_adjust;  //Subtract the angle correction from the standardized receiver roll input value.
 
+  pid_roll_setpoint *= P_roll_stab ;
+  
   //The PID set point in degrees per second is determined by the roll receiver input.
   pid_pitch_setpoint = 0;
   //We need a little dead band of 16us for better results ~ [+500 ,- 500]
@@ -265,7 +270,7 @@ void loop(){
   else if(receiver_input_channel_2 < 1492)pid_pitch_setpoint = receiver_input_channel_2 - 1492;
 
   pid_pitch_setpoint -= pitch_level_adjust;  //Subtract the angle correction from the standardized receiver roll input value.
-
+  pid_pitch_setpoint *= P_pitch_stab ;
   
    pid_yaw_setpoint = 0;
   //We need a little dead band of 16us for better results.
