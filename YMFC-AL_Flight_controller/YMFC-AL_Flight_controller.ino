@@ -232,12 +232,14 @@ void loop(){
 
  // zkria -- end
 
-  //For starting the motors: throttle low and yaw left (step 1).
+  //default start (0)
+  
+  //For starting and initilize: throttle low and yaw left, move to (start 1).
   if(receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1950)start = 1;
-  //When yaw stick is back in the center position start the motors (step 2).
+  //For the running mode: yaw stick is back in the center position, move to (start 2).
   if(start == 1 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1550){
     start = 2;
-
+    //set the angle from accelerometr for starting
     angle_pitch = angle_pitch_acc;
     angle_roll = angle_roll_acc;
     gyro_angles_set = true;
@@ -250,7 +252,7 @@ void loop(){
     pid_i_mem_yaw = 0;
     pid_last_yaw_d_error = 0;
   }
-  //Stopping the motors: throttle low and yaw right.
+  // Stop mode: throttle low and yaw right, return to (start 0)
   if(start == 2 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 < 1050)start = 0;
 
   //The PID set point in degrees per second is determined by the roll receiver input.
