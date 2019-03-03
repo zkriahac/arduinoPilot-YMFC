@@ -238,9 +238,9 @@ void loop(){
   if(start == 1 && receiver_input_channel_3 < 1050 && receiver_input_channel_4 > 1550){
     start = 2;
 
-    angle_pitch = angle_pitch_acc;                                          //Set the gyro pitch angle equal to the accelerometer pitch angle when the quadcopter is started.
-    angle_roll = angle_roll_acc;                                            //Set the gyro roll angle equal to the accelerometer roll angle when the quadcopter is started.
-    gyro_angles_set = true;                                                 //Set the IMU started flag.
+    angle_pitch = angle_pitch_acc;
+    angle_roll = angle_roll_acc;
+    gyro_angles_set = true;
 
     //Reset the PID controllers for a bumpless start.
     pid_i_mem_roll = 0;
